@@ -2,55 +2,50 @@ package com.bc.testuserrole.service;
 
 import com.bc.testuserrole.model.Role;
 import com.bc.testuserrole.model.User;
-import com.bc.testuserrole.model.UserWithRole;
-import com.bc.testuserrole.repository.RoleRepository;
 import com.bc.testuserrole.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
 
 @Service
 public class UserService {
     @Autowired private UserRepository userRepository;
-    @Autowired private RoleRepository roleRepository;
 
     public List<User> findAllUsers(){
-        return userRepository.findAll();
+        List<User> allUser = userRepository.findAll();
+        for (User value : allUser)
+            value.setRoles(null);
+        return allUser;
     }
 
-    public UserWithRole findUserWithRoleByLogin(String login){
-        UserWithRole userWithRole = new UserWithRole();
-        userWithRole.setUser(userRepository.findByLogin(login));
-        userWithRole.setListRole(roleRepository.getListRoleOfUser(login));
-        return userWithRole;
+    public User findUserByLogin(String login){
+        return userRepository.findByLogin(login);
     }
 
-    public void deleteUserByLogin(String login){
-        userRepository.deleteById(login);
+    public String deleteUserByLogin(String login){
+        if (findUserByLogin(login) != null) {
+            userRepository.deleteById(login);
+            return "success: true";
+        }
+        return "success: false. errors: user does not exist";
     }
 
-    public String saveUserWithRoleByLogin(UserWithRole userWithRole) {
-        String validate = validateUser(userWithRole.getUser());
+    public String saveUserByLogin(User user) {
+        String validate = validateUser(user);
         if (validate.equals("success: true")) {
-            userRepository.save(userWithRole.getUser());
-            String user_login = userWithRole.getUser().getLogin();
-            List<Role> listRole = new ArrayList(userWithRole.getListRole());
-            if (!listRole.isEmpty())
-                for (Role value : listRole)
-                    userRepository.addRoleToUser(user_login, value.getId());
+            userRepository.save(user);
         }
         return validate;
     }
 
-    public String editUserWithRole(UserWithRole userWithRole){
-        String validate = validateUser(userWithRole.getUser());
+    public String editUser(User user){
+        String validate = validateUser(user);
         if (validate.equals("success: true")) {
-            userRepository.updateUser(userWithRole.getUser().getLogin(), userWithRole.getUser().getName(), userWithRole.getUser().getPassword());
-            String user_login = userWithRole.getUser().getLogin();
-            List<Role> listRole = new ArrayList(userWithRole.getListRole());
+            userRepository.updateUser(user.getLogin(), user.getName(), user.getPassword());
+            String user_login = user.getLogin();
+            List<Role> listRole = new ArrayList(user.getRoles());
             if (!listRole.isEmpty()) {
                 userRepository.deleteAllRoleByUserLogin(user_login);
                 for (Role value : listRole)

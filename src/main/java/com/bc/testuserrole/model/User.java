@@ -1,8 +1,7 @@
 package com.bc.testuserrole.model;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
+import java.util.List;
 
 @Entity
 @Table(name = "users")
@@ -11,12 +10,19 @@ public class User {
     @Id
     private String login;
     private String password;
+    @ManyToMany
+    @JoinTable(
+            name = "userrole",
+            joinColumns = @JoinColumn(name = "user_login"),
+            inverseJoinColumns = @JoinColumn(name = "role_id"))
+    List<Role> roles;
 
     public User() {}
-    public User(String name, String login, String password) {
+    public User(String name, String login, String password, List<Role> roles) {
         this.name = name;
         this.login = login;
         this.password = password;
+        this.roles = roles;
     }
 
     public String getName() {
@@ -41,5 +47,13 @@ public class User {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public List<Role> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(List<Role> roles) {
+        this.roles = roles;
     }
 }
